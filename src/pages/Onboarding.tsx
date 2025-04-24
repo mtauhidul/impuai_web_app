@@ -17,7 +17,6 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
   Breadcrumb,
   BreadcrumbItem,
-  BreadcrumbLink,
   BreadcrumbList,
   BreadcrumbPage,
   BreadcrumbSeparator,
@@ -224,12 +223,10 @@ export default function EnhancedOnboarding() {
             <Breadcrumb>
               <BreadcrumbList>
                 <BreadcrumbItem>
-                  <BreadcrumbLink>
-                    <Link to="/onboarding" className="flex items-center">
-                      <LayoutDashboard className="h-4 w-4 mr-1" />
-                      Onboarding
-                    </Link>
-                  </BreadcrumbLink>
+                  <Link to="/onboarding" className="flex items-center">
+                    <LayoutDashboard className="h-4 w-4 mr-1" />
+                    Onboarding
+                  </Link>
                 </BreadcrumbItem>
                 <BreadcrumbSeparator />
                 <BreadcrumbItem>
