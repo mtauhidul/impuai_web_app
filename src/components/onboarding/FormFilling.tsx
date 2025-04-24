@@ -1,4 +1,3 @@
-// src/components/onboarding/FormFilling.tsx
 import {
   ArrowLeft,
   ArrowRight,
@@ -19,7 +18,9 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
+import { taxFormTypes } from "@/pages/Onboarding";
 import { toast } from "sonner";
 import { AiChatAssistant } from "./ai-chat-assistant/AiChatAssistant";
 import { FormUpload } from "./form-upload/FormUpload";
@@ -32,13 +33,10 @@ interface FormFillingProps {
   onPrevious: () => void;
   step: "form-type" | "form-method";
   setStep: (step: "form-type" | "form-method") => void;
-}
-
-interface FormType {
-  id: string;
-  name: string;
-  description: string;
-  icon: React.ElementType;
+  selectedForm: string | null;
+  onFormSelect: (formId: string) => void;
+  selectedMethod: string | null;
+  onMethodSelect: (methodId: string) => void;
 }
 
 interface FormMethod {
@@ -47,34 +45,6 @@ interface FormMethod {
   title: string;
   description: string;
 }
-
-// Form types
-const formTypes: FormType[] = [
-  {
-    id: "modelo100",
-    name: "Modelo 100",
-    description: "Declaración de la Renta (IRPF)",
-    icon: FileText,
-  },
-  {
-    id: "modelo303",
-    name: "Modelo 303",
-    description: "Declaración de IVA",
-    icon: FileText,
-  },
-  {
-    id: "modelo349",
-    name: "Modelo 349",
-    description: "Operaciones intracomunitarias",
-    icon: FileText,
-  },
-  {
-    id: "modelo390",
-    name: "Modelo 390",
-    description: "Resumen anual de IVA",
-    icon: FileText,
-  },
-];
 
 // Form methods
 const formMethods: FormMethod[] = [
@@ -99,7 +69,7 @@ const formMethods: FormMethod[] = [
   {
     id: "lookup",
     icon: Database,
-    title: "Fill by lookup info from govt website (API) via ID",
+    title: "Fill via API lookup with your DNI/NIE",
     description: "Quickly import your information using your ID",
   },
 ];
@@ -109,25 +79,27 @@ export function FormFilling({
   onPrevious,
   step,
   setStep,
+  selectedForm,
+  onFormSelect,
+  selectedMethod,
+  onMethodSelect,
 }: FormFillingProps): React.ReactElement {
-  const [selectedForm, setSelectedForm] = useState<string | null>(null);
-  const [selectedMethod, setSelectedMethod] = useState<string | null>(null);
   const [showAiChat, setShowAiChat] = useState<boolean>(false);
   const [showManualForm, setShowManualForm] = useState<boolean>(false);
   const [showUploadForm, setShowUploadForm] = useState<boolean>(false);
   const [showIdLookup, setShowIdLookup] = useState<boolean>(false);
 
   // Get selected form details
-  const selectedFormDetails = formTypes.find(
+  const selectedFormDetails = taxFormTypes.find(
     (form) => form.id === selectedForm
   );
 
   const handleFormTypeSelect = (formId: string): void => {
-    setSelectedForm(formId);
+    onFormSelect(formId);
   };
 
   const handleMethodSelect = (methodId: string): void => {
-    setSelectedMethod(methodId);
+    onMethodSelect(methodId);
 
     // Reset all component visibility
     setShowAiChat(false);
@@ -158,7 +130,7 @@ export function FormFilling({
     if (step === "form-type" && selectedForm) {
       setStep("form-method");
       // Reset method selection when changing form type
-      setSelectedMethod(null);
+      onMethodSelect("");
       setShowAiChat(false);
       setShowManualForm(false);
       setShowUploadForm(false);
@@ -177,7 +149,7 @@ export function FormFilling({
 
   const handleCancel = (): void => {
     // Reset the selected method and hide all components
-    setSelectedMethod(null);
+    onMethodSelect("");
     setShowAiChat(false);
     setShowManualForm(false);
     setShowUploadForm(false);
@@ -227,13 +199,15 @@ export function FormFilling({
     <Card className="w-full">
       <CardHeader>
         <CardTitle>
-          {step === "form-type" ? "Select Form Type" : "Select Method"}
+          {step === "form-type"
+            ? "Seleccione Tipo de Formulario"
+            : "Seleccione Método"}
         </CardTitle>
         <CardDescription>
           {step === "form-type"
-            ? "Choose the tax form you need to file"
-            : `Select how you'd like to complete your ${
-                selectedFormDetails?.name || "tax form"
+            ? "Elija el formulario fiscal que necesita completar"
+            : `Seleccione cómo desea completar su ${
+                selectedFormDetails?.name || "formulario fiscal"
               }`}
         </CardDescription>
       </CardHeader>
@@ -241,7 +215,7 @@ export function FormFilling({
       <CardContent className="space-y-6">
         {step === "form-type" ? (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {formTypes.map((type) => (
+            {taxFormTypes.map((type) => (
               <Card
                 key={type.id}
                 className={cn(
@@ -253,7 +227,7 @@ export function FormFilling({
               >
                 <CardContent className="flex items-center p-4">
                   <div className="bg-primary/10 p-3 rounded-full mr-4">
-                    <type.icon className="h-6 w-6 text-primary" />
+                    <FileText className="h-6 w-6 text-primary" />
                   </div>
                   <div>
                     <h3 className="font-medium">{type.name}</h3>
@@ -289,6 +263,93 @@ export function FormFilling({
               ))}
             </div>
 
+            {/* Information about selected form */}
+            {selectedFormDetails && (
+              <div className="mt-6 p-4 bg-muted/30 rounded-lg">
+                <h3 className="font-medium text-lg mb-2">
+                  {selectedFormDetails.name} - Información
+                </h3>
+                <Separator className="mb-3" />
+                <div className="space-y-2">
+                  {selectedFormDetails.id === "modelo100" && (
+                    <>
+                      <p className="text-sm">
+                        El <strong>Modelo 100</strong> es la declaración anual
+                        del IRPF (Impuesto sobre la Renta de las Personas
+                        Físicas) que deben presentar los contribuyentes
+                        residentes en España.
+                      </p>
+                      <p className="text-sm">
+                        <strong>Plazo de presentación:</strong> Generalmente
+                        entre abril y junio del año siguiente al ejercicio
+                        fiscal.
+                      </p>
+                      <p className="text-sm">
+                        <strong>Información necesaria:</strong> Ingresos por
+                        trabajo, rendimientos de capital, ganancias
+                        patrimoniales, deducciones aplicables.
+                      </p>
+                    </>
+                  )}
+
+                  {selectedFormDetails.id === "modelo303" && (
+                    <>
+                      <p className="text-sm">
+                        El <strong>Modelo 303</strong> es la declaración
+                        trimestral del IVA (Impuesto sobre el Valor Añadido) que
+                        deben presentar autónomos y empresas.
+                      </p>
+                      <p className="text-sm">
+                        <strong>Plazo de presentación:</strong> Trimestral
+                        (abril, julio, octubre y enero)
+                      </p>
+                      <p className="text-sm">
+                        <strong>Información necesaria:</strong> IVA repercutido,
+                        IVA soportado, operaciones intracomunitarias.
+                      </p>
+                    </>
+                  )}
+
+                  {selectedFormDetails.id === "modelo130" && (
+                    <>
+                      <p className="text-sm">
+                        El <strong>Modelo 130</strong> es el pago fraccionado
+                        del IRPF para autónomos y profesionales en estimación
+                        directa.
+                      </p>
+                      <p className="text-sm">
+                        <strong>Plazo de presentación:</strong> Trimestral
+                        (abril, julio, octubre y enero)
+                      </p>
+                      <p className="text-sm">
+                        <strong>Información necesaria:</strong> Ingresos y
+                        gastos trimestrales, retenciones soportadas.
+                      </p>
+                    </>
+                  )}
+
+                  {selectedFormDetails.id === "modelo714" && (
+                    <>
+                      <p className="text-sm">
+                        El <strong>Modelo 714</strong> es la declaración del
+                        Impuesto sobre el Patrimonio para personas con bienes
+                        superiores a cierto umbral.
+                      </p>
+                      <p className="text-sm">
+                        <strong>Plazo de presentación:</strong> Mismos plazos
+                        que el IRPF (generalmente abril-junio)
+                      </p>
+                      <p className="text-sm">
+                        <strong>Información necesaria:</strong> Bienes
+                        inmuebles, cuentas bancarias, inversiones, vehículos,
+                        obras de arte, etc.
+                      </p>
+                    </>
+                  )}
+                </div>
+              </div>
+            )}
+
             {/* Render AI Chat Assistant when AI method is selected */}
             {showAiChat && (
               <div className="mt-8">
@@ -307,7 +368,7 @@ export function FormFilling({
             className="flex items-center gap-2"
           >
             <ArrowLeft className="h-4 w-4" />
-            Previous
+            Anterior
           </Button>
         ) : (
           <Button
@@ -322,7 +383,7 @@ export function FormFilling({
             className="flex items-center gap-2"
           >
             <ArrowLeft className="h-4 w-4" />
-            Back to Form Types
+            Volver a Tipos de Formulario
           </Button>
         )}
 
@@ -334,7 +395,7 @@ export function FormFilling({
           }
           className="flex items-center gap-2"
         >
-          Continue
+          Continuar
           <ArrowRight className="h-4 w-4" />
         </Button>
       </CardFooter>
